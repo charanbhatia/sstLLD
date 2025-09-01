@@ -1,28 +1,47 @@
 package com.example.profiles;
 
-import java.util.Objects;
-
 /**
- * Assembles profiles with scattered, inconsistent validation.
+ * ProfileService now creates immutable UserProfile objects using Builder pattern.
+ * No more mutation after creation.
  */
 public class ProfileService {
 
-    // returns a fully built profile but mutates it afterwards (bug-friendly)
+    // Creates a minimal profile with just required fields
     public UserProfile createMinimal(String id, String email) {
-        if (id == null || id.isBlank()) throw new IllegalArgumentException("bad id");
-        if (email == null || !email.contains("@")) throw new IllegalArgumentException("bad email");
-
-        UserProfile p = new UserProfile(id, email);
-        // later code keeps mutating...
-        return p;
+        return UserProfile.builder(id, email).build();
     }
 
-    public void updateDisplayName(UserProfile p, String displayName) {
-        Objects.requireNonNull(p, "profile");
-        if (displayName != null && displayName.length() > 100) {
-            // silently trim (inconsistent policy)
-            displayName = displayName.substring(0, 100);
-        }
-        p.setDisplayName(displayName); // mutability leak
+    // Creates a profile with additional optional fields
+    public UserProfile createProfile(String id, String email, String displayName, 
+                                   String phone, boolean marketingOptIn) {
+        return UserProfile.builder(id, email)
+                .displayName(displayName)
+                .phone(phone)
+                .marketingOptIn(marketingOptIn)
+                .build();
+    }
+
+    // Creates a new profile with updated display name (returns new immutable instance)
+    public UserProfile withUpdatedDisplayName(UserProfile original, String displayName) {
+        return UserProfile.builder(original.getId(), original.getEmail())
+                .phone(original.getPhone())
+                .displayName(displayName)  // Updated field
+                .address(original.getAddress())
+                .marketingOptIn(original.isMarketingOptIn())
+                .twitter(original.getTwitter())
+                .github(original.getGithub())
+                .build();
+    }
+
+    // Creates a new profile with updated marketing preference
+    public UserProfile withUpdatedMarketingOptIn(UserProfile original, boolean marketingOptIn) {
+        return UserProfile.builder(original.getId(), original.getEmail())
+                .phone(original.getPhone())
+                .displayName(original.getDisplayName())
+                .address(original.getAddress())
+                .marketingOptIn(marketingOptIn)  // Updated field
+                .twitter(original.getTwitter())
+                .github(original.getGithub())
+                .build();
     }
 }
